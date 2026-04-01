@@ -293,8 +293,3 @@ Las contribuciones son bienvenidas. Por favor:
 
 Laravel API Breeze Vite + Vue 3 es software de código abierto licenciado bajo la licencia MIT.
 
----
-
-Cópialo y pégalo directamente en el README.md. ¿Ya está?
-
-Código similar encontrado con 2 tipos de licencias
