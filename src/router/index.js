@@ -55,10 +55,15 @@ router.beforeEach(async (to, from, next) => {
 
   const auth = useAuthStore()
 
-  if (!auth.isLoggedIn) {
-    await auth.fetchUser()
+  // Si no estamos loguados pero hay token, intentar recuperar usuario
+  if (!auth.isLoggedIn && localStorage.getItem('access_token')) {
+    await auth.fetchUser().catch(() => {
+      // Si falla, limpiar token
+      localStorage.removeItem('access_token')
+    })
   }
 
+  // Validar middlewares
   if (to.meta.middleware.includes('guest') && auth.isLoggedIn) next({ name: 'dashboard' })
   else if (
     to.meta.middleware.includes('verified') &&

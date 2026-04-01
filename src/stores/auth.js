@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
-import axios from '../utils/axios'
+import axios, { getToken, setToken, clearToken } from '../utils/axios'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -21,18 +21,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const csrf = () => axios.get('/sanctum/csrf-cookie')
-
   const login = async (processing, errors, { ...data }) => {
     processing.value = true
     errors.value = {}
 
     try {
-      await csrf()
+      const response = await axios.post('/login', data)
 
-      await axios.post('/login', data)
+      // Guardar token
+      setToken(response.data.access_token)
 
-      await fetchUser()
+      // Obtener datos del usuario
+      user.value = response.data.user
 
       router.push({ name: 'dashboard' })
     } catch (error) {
@@ -49,11 +49,13 @@ export const useAuthStore = defineStore('auth', () => {
     errors.value = {}
 
     try {
-      await csrf()
+      const response = await axios.post('/register', data)
 
-      await axios.post('/register', data)
+      // Guardar token
+      setToken(response.data.access_token)
 
-      await fetchUser()
+      // Obtener datos del usuario
+      user.value = response.data.user
 
       router.push({ name: 'dashboard' })
     } catch (error) {
@@ -71,8 +73,6 @@ export const useAuthStore = defineStore('auth', () => {
     status.value = null
 
     try {
-      await csrf()
-
       const { data } = await axios.post('/forgot-password', { email })
 
       status.value = data.status
@@ -91,8 +91,6 @@ export const useAuthStore = defineStore('auth', () => {
     status.value = null
 
     try {
-      await csrf()
-
       const response = await axios.post('/reset-password', data)
 
       router.push({
@@ -123,14 +121,23 @@ export const useAuthStore = defineStore('auth', () => {
     await axios.post('/logout')
 
     user.value = null
+    clearToken()
 
     router.push({ name: 'login' })
+  }
+
+  const initAuth = async () => {
+    const token = getToken()
+    if (token) {
+      await fetchUser()
+    }
   }
 
   return {
     user,
     isLoggedIn,
     fetchUser,
+    initAuth,
     login,
     register,
     forgotPassword,
